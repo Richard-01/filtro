@@ -1,6 +1,9 @@
 const { Book } = require('../Models/book.Model');
 const jwt = require('jsonwebtoken');
-const { SECRET_KEY } = require('../config');
+const { JWT_SECRET_KEY, ONE_DAY_IN_SECONDS } = require('../config');
+const { handleError } = require('../helpers/errorHandling');
+
+const handleErrorRes = handleError(res);
 
 
 const createBook = async (req, res) => {
@@ -14,8 +17,8 @@ const createBook = async (req, res) => {
         }
         const newBook = new Book(bookData);
         await newBook.save();
-        const token = jwt.sign({id: newBook._id }, SECRET_KEY,{
-            expiresIn: 86400 // Esto es 24hrs.
+        const token = jwt.sign({id: newBook._id }, JWT_SECRET_KEY,{
+            expiresIn: ONE_DAY_IN_SECONDS
         });
         const bookDataWithToken = { 
             id: newBook._id, 
@@ -25,10 +28,9 @@ const createBook = async (req, res) => {
             description: newBook.description, 
             token: token  
         }
-        res.status(200).send({ status: true, data: bookDataWithToken, message: 'Acceso permitido.'});
+        res.status(201).send({ status: true, data: bookDataWithToken, message: 'Acceso permitido.'});
     } catch (error) {
-        res.status(500).json({ error: error.message });
-        console.error(error);
+        handleErrorRes(400, 'Error al crear el libro.', error);
     }
 }
 
@@ -49,8 +51,7 @@ const getBookById = async (req, res) => {
         const book = await Book.findById(id);
         res.status(200).json(book);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener este libro.'});
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener este libro.', error);
     }
 }
 
@@ -63,8 +64,7 @@ const getBookByAuthor = async (req, res) => {
         }
         res.status(200).json(book);
     } catch (error) {
-        res.status(500).json({ message: 'Error los libros del Autor.' });
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener este libro por autor, verifica el autor.', error);
     }
 }
 
@@ -77,8 +77,7 @@ const getBookByName = async (req, res) =>{
         }
         res.status(200).json(book);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener este libro.' });
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener libros por nombre.', error);
     }
 }
 
@@ -91,8 +90,7 @@ const getBookByPages = async (req, res) => {
         }
         res.status(200).json(book);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener este libro.' });
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener libros por paginas.', error);
     }
 }
 
@@ -102,8 +100,7 @@ const updateBook = async (req, res) => {
         const updatedBook = await Book.findByIdAndUpdate(id, req.body, { new: true });
         res.status(200).json(updatedBook);
     } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar el libro.'});
-        console.error(error);
+        handleErrorRes(400, 'Error al actualizar el libro.', error);
     }
 }
 
@@ -113,8 +110,7 @@ const deleteBook = async (req, res) => {
         await Book.findByIdAndDelete(id);
         res.status(200).json({ message: 'Libro eliminado exitosamente.'});
     } catch (error) {
-        res.status(500).json({ message: 'Error al eliminar el libro.'});
-        console.error(error);
+        handleErrorRes(400, 'Error al eliminar el libro.', error);
     }
 }
 

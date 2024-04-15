@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { SECRET_KEY } = require('../config');
+const { JWT_SECRET_KEY } = require('../config');
 
 const authenticateToken = (req, res, next) => {
     const token = req.headers['authorization']; 
@@ -8,7 +8,7 @@ const authenticateToken = (req, res, next) => {
             
     }
 
-    jwt.verify(token, SECRET_KEY, (err, user) => {
+    jwt.verify(token, JWT_SECRET_KEY, (err, user) => {
         if (err) {
             return res.status(403).send({ message: 'Token inválido.' });
         }

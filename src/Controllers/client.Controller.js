@@ -1,6 +1,9 @@
 const {Client} = require('../Models/client.Model');
 const jwt = require('jsonwebtoken');
-const {SECRET_KEY} = require('../config');
+const {JWT_SECRET_KEY, ONE_DAY_IN_SECONDS } = require('../config');
+const { handleError } = require('../helpers/errorHandling');
+
+const handleErrorRes = handleError(res);
 
 const createClient = async (req, res) => {
     try {
@@ -14,8 +17,8 @@ const createClient = async (req, res) => {
         }
         const newClient = new Client(clientData);
         await newClient.save();
-        const token = jwt.sign({id: newClient._id }, SECRET_KEY,{
-            expiresIn: 86400 // Esto es 24hrs.
+        const token = jwt.sign({id: newClient._id }, JWT_SECRET_KEY,{
+            expiresIn: ONE_DAY_IN_SECONDS
         });
         const clientDataWithToken = { 
             id: newClient._id, 
@@ -26,10 +29,9 @@ const createClient = async (req, res) => {
             age: newClient.age,
             token: token  
         }
-        res.status(200).send({ status: true, data: clientDataWithToken, message: 'Acceso permitido.'});
+        res.status(201).send({ status: true, data: clientDataWithToken, message: 'Acceso permitido.'});
     } catch (error) {
-        res.status(500).json({ error: error.message });
-        console.error(error);
+        handleErrorRes(400, 'Error al crear el cliente.', error);
     }
 }
 
@@ -49,8 +51,7 @@ const getClientById = async (req, res) => {
         const client = await Client.findById(id);
         res.status(200).json(client);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener este cliente.'});
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener este cliente.', error);
     }
 }
 
@@ -63,8 +64,7 @@ const getClientByEmail = async (req, res) => {
         }
         res.status(200).json(client);
     } catch (error) {
-        res.status(500).json({ message: 'Error al obtener este cliente.' });
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener este cliente por email, verifica el email.', error);
     }
 }
 
@@ -74,8 +74,7 @@ const getClientsByGender = async (req, res) => {
         const clients = await Client.find({ gender });
         res.status(200).json(clients);
     } catch (error) {
-        res.status(500).json({ message: 'Algo salio mal intenta de nuevo.' });
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener clientes por género.', error);
     }
 }
 
@@ -88,8 +87,7 @@ const getClientsByAge = async (req, res) => {
         }
         res.status(200).json(clients);
     } catch (error) {
-        res.status(500).json({ message: 'Algo salio mal intenta de nuevo.'});
-        console.error(error);
+        handleErrorRes(404, 'Error al obtener clientes por edad.', error);
     }
 }
 
@@ -99,8 +97,7 @@ const updateClient = async (req, res) => {
         const updatedClient = await Client.findByIdAndUpdate(id, req.body, { new: true });
         res.status(200).json(updatedClient);
     } catch (error) {
-        res.status(500).json({ message: 'Error al actualizar el cliente.'});
-        console.error(error);
+        handleErrorRes(400, 'Error al actualizar el cliente.', error);
     }
 }
 
@@ -110,8 +107,7 @@ const deleteClient = async (req, res) => {
         await Client.findByIdAndDelete(id);
         res.status(200).json({ message: 'Cliente eliminado exitosamente.'});
     } catch (error) {
-        res.status(500).json({ message: 'Error al eliminar el cliente.'});
-        console.error(error);
+        handleErrorRes(400, 'Error al eliminar el cliente.', error);
     }
 }
 
